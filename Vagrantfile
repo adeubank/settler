@@ -19,7 +19,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.cpus = 2
   end
 
-  config.vm.provider "parallels" do |v|
+  config.vm.provider :parallels do |v|
     v.update_guest_tools = true
     v.optimize_power_consumption = true
     v.memory = 2048
@@ -34,10 +34,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder './', '/vagrant', disabled: true
 
+  non_parallels_provisioning = lambda do |override|
+    # some code + provider-specific provisioning
+    override.vm.provision 'shell', path: './scripts/update.sh'
+    override.vm.provision :reload
+    override.vm.provision 'shell', path: './scripts/vmware_tools.sh'
+    override.vm.provision :reload
+    override.vm.provision 'shell', path: './scripts/provision.sh'
+  end
+
   # Run The Base Provisioning Script
-  config.vm.provision 'shell', path: './scripts/update.sh'
-  config.vm.provision :reload
-  config.vm.provision 'shell', path: './scripts/vmware_tools.sh'
-  config.vm.provision :reload
-  config.vm.provision 'shell', path: './scripts/provision.sh'
+  config.vm.provider :virtualbox do |_, override|
+    non_parallels_provisioning.call override
+  end
+
+  config.vm.provider :vmware_fusion do |_, override|
+    non_parallels_provisioning.call override
+  end
+
+  config.vm.provider :parallels do |vb, override|
+    override.vm.box = "parallels/ubuntu-14.10"
+    override.vm.provision 'shell', path: './scripts/update.sh'
+    override.vm.provision :reload
+    override.vm.provision 'shell', path: './scripts/provision.sh'
+  end
 end
