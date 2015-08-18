@@ -21,7 +21,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provider :parallels do |v|
     v.update_guest_tools = true
-    v.optimize_power_consumption = true
+    v.optimize_power_consumption = false
     v.memory = 2048
     v.cpus = 2
   end
